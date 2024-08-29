@@ -1,0 +1,89 @@
+---
+title: "Desafío I"
+author: "Lucía Cueva"
+date: "2024-08-29"
+output: github_document
+---
+# PREPARAR LA INFORMACION 
+```{r}
+# cargo la librerias Dplyr y tidyverse
+library(dplyr)
+library(tidyverse)
+
+#para buscar dirrecion de la base de datos de interés
+file.choose() 
+
+#cargar la base de datos: data
+data <- read.csv("D:\\PROGRAMA CIENCIA DE DATOS\\Modulo I\\Iowa_Liquor_Sales.csv", 
+                 stringsAsFactors = F, 
+                 header = T)
+# creo una nueva base de datos "datos" a partir de data con algunas modificaciones
+datos <- data%>%
+  mutate(Sale..Dollars.=(as.numeric(substr(data$Sale..Dollars.,2,15))),
+         City=toupper(City),
+         Store.Name=(toupper(Store.Name)),
+         Date=as.Date(Date,format = "%m/%d/%Y"),
+         anio=lubridate::year(Date)) %>% 
+  rename(ventas=Sale..Dollars.,
+         ciudad=City,
+         categoria=Category.Name,
+         nombre_tienda=Store.Name)
+```
+# Top 5 de tiendas (promedio ventas) para ciudad CEDAR RAPIDS, 2016
+```{r}
+
+datos %>% 
+  filter(anio== 2016, ciudad=="CEDAR RAPIDS") %>% 
+  group_by(ciudad, nombre_tienda, anio) %>%
+  summarise_each(.,funs(media=mean(.,na.rm=T)), ventas) %>%
+  arrange(-media) %>% 
+  pivot_wider(names_from = ciudad,
+              values_from = media)
+```
+# TOP 5 últimos vendedores (promedio de ventas, para el 2016, para DAVENPORT
+```{r}
+datos %>% 
+  filter(anio== 2016, ciudad=="DAVENPORT") %>% 
+  group_by(ciudad, Vendor.Name, anio) %>%
+  summarise_each(.,funs(media=mean(.,na.rm=T)), ventas) %>%
+  arrange(+media) %>% 
+  pivot_wider(names_from = ciudad,
+              values_from = media)
+
+```
+# Top 5 de productos más vendidos, para el 2016 y 2017, por ciudad
+```{r}
+# 2016
+datos %>% 
+  filter(anio==2016) %>% 
+  group_by(ciudad, categoria, anio) %>%
+  summarise_each(.,funs(ventas_total=sum(.,na.rm=T)), ventas) %>%
+  arrange(ciudad, -ventas_total) %>% 
+  pivot_wider(names_from = anio,
+              values_from = ventas_total,
+              values_fill = 0)
+# 2017
+datos %>% 
+  filter(anio==2017) %>% 
+  group_by(ciudad, categoria, anio) %>%
+  summarise_each(.,funs(ventas_total=sum(.,na.rm=T)), ventas) %>%
+  arrange(ciudad, -ventas_total) %>% 
+  pivot_wider(names_from = anio,
+              values_from = ventas_total,
+              values_fill = 0)
+
+# 2016 y 2017
+datos %>% 
+  filter(anio!=2015) %>% 
+  group_by(ciudad, categoria, anio) %>%
+  summarise_each(.,funs(ventas_total=sum(.,na.rm=T)), ventas) %>%
+  arrange(ciudad, -ventas_total) %>% 
+  pivot_wider(names_from = anio,
+              values_from = ventas_total,
+              values_fill = 0)
+
+```
+
+
+
+
